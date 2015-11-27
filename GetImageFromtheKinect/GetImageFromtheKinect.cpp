@@ -28,7 +28,9 @@ private:
 	DWORD height;
 
 	int savedCount = 0;
-	char fileName[32];
+	char fileName[64];
+	char directoryName[64];
+	char listName[64];
 
 	FILE *fp;
 
@@ -55,31 +57,51 @@ public:
 	{
 		cv::Mat image;
 
-		_mkdir("capture"); //ディレクトリの作成
+		int savePredeterminedNum;
+		std::cout << "撮影する枚数を入力してください => ";
+		std::cin >> savePredeterminedNum;
 
-		fopen_s(&fp, "imglist.xml", "w");
-		fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
-		fprintf_s(fp, "<opencv_storage>\n");
-		fprintf_s(fp, "<images>\n");
+		std::cout << savePredeterminedNum << " 枚キャプチャーします" << std::endl;
 
-		while (1){
-			drawRgbImage(image);
-			cv::imshow("Kinect", image);
-			int key = cv::waitKey(10);
-			if (key == 'q'){
-				fprintf_s(fp, "</images>\n");
-				fprintf_s(fp, "</opencv_storage>\n");
-				fclose(fp);
-				break;
+		if (savePredeterminedNum > 0){
+			//SYSTEMTIME st;
+			//GetLocalTime(&st);
+			//sprintf_s(directoryName, "[%4d%02d%02d]%02d_%02d_%02d_capture", st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond);
+			//_mkdir(directoryName); //ディレクトリの作成
+
+			_mkdir("capture");
+
+			//sprintf_s(listName, "%s/imglist.xml", directoryName);
+			//fopen_s(&fp, "capture/imglist.xml", "w");
+			//fprintf_s(fp, "<?xml version=\"1.0\"?>\n");
+			//fprintf_s(fp, "<opencv_storage>\n");
+			//fprintf_s(fp, "<images>\n");
+
+			while (1){
+				drawRgbImage(image);
+				cv::namedWindow("Kinect", CV_WINDOW_NORMAL);
+				cv::imshow("Kinect", image);
+				int key = cv::waitKey(10);
+				if (key == 'q' || savedCount == savePredeterminedNum){
+					std::cout << "キャプチャーが完了しました" << std::endl;
+					//fprintf_s(fp, "</images>\n");
+					//fprintf_s(fp, "</opencv_storage>\n");
+					//fclose(fp);
+					break;
+				}
+				else if (key == 'p'){
+					PlaySound(TEXT("shutter_nikon.wav"), NULL, (SND_ASYNC | SND_FILENAME));
+					savedCount++;
+					//sprintf_s(fileName, "%s/capture_%d.jpg", directoryName,savedCount);
+					sprintf_s(fileName, "capture/capture_%d.bmp", savedCount);
+					cv::imwrite(fileName, image);
+					//fprintf_s(fp, "%s\n", fileName);
+					std::cout << fileName << " Captured." << std::endl;
+				}
 			}
-			else if (key == 'p'){
-				PlaySound(TEXT("shutter_nikon.wav"), NULL, (SND_ASYNC | SND_FILENAME));
-				sprintf_s(fileName, "capture/capture_%d.jpg", savedCount);
-				cv::imwrite(fileName, image);
-				fprintf_s(fp, "%s\n",fileName);
-				std::cout << "キャプチャー完了!! => " << fileName << std::endl;
-				savedCount++;
-			}
+		}
+		else{
+			std::cout << "保存する枚数を正しく指定しなおしてください" << std::endl;
 		}
 	}
 
